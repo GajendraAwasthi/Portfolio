@@ -35,6 +35,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preload" as="audio" href="src/tismarmobile.MP3">
+    <link rel="preload" as="audio" href="src/tesmardesktop.MP3">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
@@ -3007,6 +3009,8 @@
                 lastShakeLevel: 0,
                 isMobileSoundPlaying: false,
                 isMobileDeviceView: false,
+                mobileAudioObjectUrl: null,
+                desktopAudioObjectUrl: null,
 
                 init() {
                     this.setupTypingAnimation();
@@ -3037,6 +3041,36 @@
                         this.desktopAudio.preload = 'auto';
                         this.desktopAudio.load();
                     }
+
+                    const warmAudio = async (filePath, assignObjectUrl) => {
+                        try {
+                            const response = await fetch(filePath, {
+                                cache: 'force-cache'
+                            });
+
+                            if (!response.ok) return;
+                            const audioBlob = await response.blob();
+                            const blobUrl = URL.createObjectURL(audioBlob);
+                            assignObjectUrl(blobUrl);
+                        } catch (error) {
+                        }
+                    };
+
+                    warmAudio('src/tismarmobile.MP3', (blobUrl) => {
+                        this.mobileAudioObjectUrl = blobUrl;
+                        if (this.mobileAudio) {
+                            this.mobileAudio.src = blobUrl;
+                            this.mobileAudio.load();
+                        }
+                    });
+
+                    warmAudio('src/tesmardesktop.MP3', (blobUrl) => {
+                        this.desktopAudioObjectUrl = blobUrl;
+                        if (this.desktopAudio) {
+                            this.desktopAudio.src = blobUrl;
+                            this.desktopAudio.load();
+                        }
+                    });
                 },
 
                 setupTitleRotation() {
