@@ -615,6 +615,7 @@
         .hero-content {
             text-align: center;
             max-width: 900px;
+            padding-bottom: 6.5rem;
             animation: fadeInUp 0.8s ease-out;
         }
 
@@ -805,6 +806,13 @@
         .scroll-indicator p {
             color: var(--text-light);
             font-size: 0.85rem;
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.35;
+        }
+
+        .scroll-text-mobile {
+            display: none;
         }
 
         /* Section Styles */
@@ -2169,17 +2177,26 @@
             }
 
             .scroll-indicator {
-                bottom: 15px;
+                bottom: 10px;
                 gap: 5px;
             }
 
             .scroll-indicator p {
                 font-size: 0.75rem;
+                max-width: 260px;
             }
 
             .scroll-indicator svg {
                 width: 16px;
                 height: 24px;
+            }
+
+            .scroll-text-desktop {
+                display: none;
+            }
+
+            .scroll-text-mobile {
+                display: block;
             }
 
             .terminal-window {
@@ -2472,7 +2489,8 @@
                 </div>
 
                 <div class="scroll-indicator">
-                    <p>Scroll to explore</p>
+                    <p class="scroll-text-desktop">Scroll to explore</p>
+                    <p class="scroll-text-mobile">Scroll to explore &amp; Shake to cure bore.</p>
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 3v12m0 0l-3-3m3 3l3-3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -2980,6 +2998,15 @@
                 titleTimer: null,
                 titleVisibilityHandler: null,
                 baseTitle: 'Gajendra Awasthi | Cybersecurity, Development & Creative Portfolio',
+                desktopAudio: null,
+                mobileAudio: null,
+                desktopUnlockHandler: null,
+                motionHandler: null,
+                motionUnlockHandler: null,
+                lastShakeAt: 0,
+                lastShakeLevel: 0,
+                isMobileSoundPlaying: false,
+                isMobileDeviceView: false,
 
                 init() {
                     this.setupTypingAnimation();
@@ -2990,6 +3017,7 @@
                     this.setupScrollProgress();
                     this.setupSectionReveal();
                     this.setupTitleRotation();
+                    this.setupDeviceAudio();
                 },
 
                 setupTitleRotation() {
@@ -3059,6 +3087,161 @@
                     document.addEventListener('visibilitychange', this.titleVisibilityHandler);
 
                     animateTitle();
+                },
+
+                detectMobileDeviceView() {
+                    const ua = navigator.userAgent || '';
+                    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
+                    const hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+                    return mobileUA || (hasTouch && window.innerWidth <= 1024);
+                },
+
+                stopAudioAndMotion() {
+                    if (this.desktopAudio) {
+                        this.desktopAudio.pause();
+                        this.desktopAudio.currentTime = 0;
+                    }
+
+                    if (this.mobileAudio) {
+                        this.mobileAudio.pause();
+                        this.mobileAudio.currentTime = 0;
+                    }
+
+                    this.isMobileSoundPlaying = false;
+
+                    if (this.motionHandler) {
+                        window.removeEventListener('devicemotion', this.motionHandler);
+                        this.motionHandler = null;
+                    }
+
+                    if (this.motionUnlockHandler) {
+                        window.removeEventListener('touchstart', this.motionUnlockHandler);
+                        window.removeEventListener('click', this.motionUnlockHandler);
+                        this.motionUnlockHandler = null;
+                    }
+
+                    if (this.desktopUnlockHandler) {
+                        window.removeEventListener('pointerdown', this.desktopUnlockHandler);
+                        window.removeEventListener('keydown', this.desktopUnlockHandler);
+                        this.desktopUnlockHandler = null;
+                    }
+                },
+
+                setupDeviceAudio() {
+                    const applyMode = () => {
+                        const nextIsMobile = this.detectMobileDeviceView();
+
+                        if (nextIsMobile === this.isMobileDeviceView && (this.desktopAudio || this.mobileAudio)) {
+                            return;
+                        }
+
+                        this.stopAudioAndMotion();
+                        this.isMobileDeviceView = nextIsMobile;
+
+                        if (nextIsMobile) {
+                            this.setupMobileShakeAudio();
+                        } else {
+                            this.setupDesktopLoopAudio();
+                        }
+                    };
+
+                    applyMode();
+                    window.addEventListener('resize', applyMode);
+                },
+
+                setupDesktopLoopAudio() {
+                    if (!this.desktopAudio) {
+                        this.desktopAudio = new Audio('src/tesmardesktop.MP3');
+                        this.desktopAudio.loop = true;
+                        this.desktopAudio.volume = 0.55;
+                        this.desktopAudio.preload = 'auto';
+                    }
+
+                    const tryStartDesktopAudio = () => {
+                        this.desktopAudio.play().then(() => {
+                            if (this.desktopUnlockHandler) {
+                                window.removeEventListener('pointerdown', this.desktopUnlockHandler);
+                                window.removeEventListener('keydown', this.desktopUnlockHandler);
+                                this.desktopUnlockHandler = null;
+                            }
+                        }).catch(() => {
+                            if (!this.desktopUnlockHandler) {
+                                this.desktopUnlockHandler = () => {
+                                    tryStartDesktopAudio();
+                                };
+
+                                window.addEventListener('pointerdown', this.desktopUnlockHandler);
+                                window.addEventListener('keydown', this.desktopUnlockHandler);
+                            }
+                        });
+                    };
+
+                    tryStartDesktopAudio();
+                },
+
+                setupMobileShakeAudio() {
+                    if (!this.mobileAudio) {
+                        this.mobileAudio = new Audio('src/tismarmobile.MP3');
+                        this.mobileAudio.loop = false;
+                        this.mobileAudio.preload = 'auto';
+                        this.mobileAudio.volume = 1;
+                        this.mobileAudio.addEventListener('ended', () => {
+                            this.isMobileSoundPlaying = false;
+                        });
+                    }
+
+                    const playMobileShakeSound = () => {
+                        if (!this.mobileAudio || this.isMobileSoundPlaying) return;
+
+                        this.mobileAudio.currentTime = 0;
+                        this.mobileAudio.play().then(() => {
+                            this.isMobileSoundPlaying = true;
+                        }).catch(() => {});
+                    };
+
+                    const attachMotionListener = () => {
+                        if (this.motionHandler) return;
+
+                        this.motionHandler = (event) => {
+                            const acc = event.accelerationIncludingGravity;
+                            if (!acc) return;
+
+                            const level = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+                            const delta = Math.abs(level - this.lastShakeLevel);
+                            this.lastShakeLevel = level;
+
+                            const now = Date.now();
+                            if (delta > 18 && now - this.lastShakeAt > 1600) {
+                                this.lastShakeAt = now;
+                                playMobileShakeSound();
+                            }
+                        };
+
+                        window.addEventListener('devicemotion', this.motionHandler, { passive: true });
+                    };
+
+                    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                        this.motionUnlockHandler = async () => {
+                            try {
+                                const state = await DeviceMotionEvent.requestPermission();
+                                if (state === 'granted') {
+                                    attachMotionListener();
+                                }
+                            } catch (error) {
+                            }
+
+                            if (this.motionUnlockHandler) {
+                                window.removeEventListener('touchstart', this.motionUnlockHandler);
+                                window.removeEventListener('click', this.motionUnlockHandler);
+                                this.motionUnlockHandler = null;
+                            }
+                        };
+
+                        window.addEventListener('touchstart', this.motionUnlockHandler, { once: true });
+                        window.addEventListener('click', this.motionUnlockHandler, { once: true });
+                    } else {
+                        attachMotionListener();
+                    }
                 },
 
                 setupTypingAnimation() {
