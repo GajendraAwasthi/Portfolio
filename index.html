@@ -3017,7 +3017,26 @@
                     this.setupScrollProgress();
                     this.setupSectionReveal();
                     this.setupTitleRotation();
+                    this.preloadAudioAssets();
                     this.setupDeviceAudio();
+                },
+
+                preloadAudioAssets() {
+                    if (!this.mobileAudio) {
+                        this.mobileAudio = new Audio('src/tismarmobile.MP3');
+                        this.mobileAudio.loop = false;
+                        this.mobileAudio.preload = 'auto';
+                        this.mobileAudio.volume = 1;
+                        this.mobileAudio.load();
+                    }
+
+                    if (!this.desktopAudio) {
+                        this.desktopAudio = new Audio('src/tesmardesktop.MP3');
+                        this.desktopAudio.loop = true;
+                        this.desktopAudio.volume = 0.55;
+                        this.desktopAudio.preload = 'auto';
+                        this.desktopAudio.load();
+                    }
                 },
 
                 setupTitleRotation() {
@@ -3155,6 +3174,7 @@
                         this.desktopAudio.loop = true;
                         this.desktopAudio.volume = 0.55;
                         this.desktopAudio.preload = 'auto';
+                        this.desktopAudio.load();
                     }
 
                     const tryStartDesktopAudio = () => {
@@ -3185,25 +3205,36 @@
                         this.mobileAudio.loop = false;
                         this.mobileAudio.preload = 'auto';
                         this.mobileAudio.volume = 1;
-                        this.mobileAudio.addEventListener('ended', () => {
-                            this.isMobileSoundPlaying = false;
-                        });
+                        this.mobileAudio.load();
                     }
 
                     const playMobileShakeSound = () => {
-                        if (!this.mobileAudio || this.isMobileSoundPlaying) return;
+                        if (!this.mobileAudio) return;
 
+                        this.mobileAudio.pause();
                         this.mobileAudio.currentTime = 0;
+                        this.mobileAudio.play().catch(() => {});
+                    };
+
+                    const unlockMobileAudio = () => {
+                        if (!this.mobileAudio) return;
+
+                        const previousMuted = this.mobileAudio.muted;
+                        this.mobileAudio.muted = true;
                         this.mobileAudio.play().then(() => {
-                            this.isMobileSoundPlaying = true;
-                        }).catch(() => {});
+                            this.mobileAudio.pause();
+                            this.mobileAudio.currentTime = 0;
+                            this.mobileAudio.muted = previousMuted;
+                        }).catch(() => {
+                            this.mobileAudio.muted = previousMuted;
+                        });
                     };
 
                     const attachMotionListener = () => {
                         if (this.motionHandler) return;
 
                         this.motionHandler = (event) => {
-                            const acc = event.accelerationIncludingGravity;
+                            const acc = event.accelerationIncludingGravity || event.acceleration || event.detail?.accelerationIncludingGravity;
                             if (!acc) return;
 
                             const level = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
@@ -3211,7 +3242,7 @@
                             this.lastShakeLevel = level;
 
                             const now = Date.now();
-                            if (delta > 18 && now - this.lastShakeAt > 1600) {
+                            if (delta > 4 && now - this.lastShakeAt > 250) {
                                 this.lastShakeAt = now;
                                 playMobileShakeSound();
                             }
@@ -3222,6 +3253,7 @@
 
                     if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                         this.motionUnlockHandler = async () => {
+                            unlockMobileAudio();
                             try {
                                 const state = await DeviceMotionEvent.requestPermission();
                                 if (state === 'granted') {
@@ -3240,6 +3272,7 @@
                         window.addEventListener('touchstart', this.motionUnlockHandler, { once: true });
                         window.addEventListener('click', this.motionUnlockHandler, { once: true });
                     } else {
+                        unlockMobileAudio();
                         attachMotionListener();
                     }
                 },
