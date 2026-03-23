@@ -2977,6 +2977,9 @@
                 showBackToTop: false,
                 typingTimer: null,
                 isTypingRunning: false,
+                titleTimer: null,
+                titleVisibilityHandler: null,
+                baseTitle: 'Gajendra Awasthi | Cybersecurity, Development & Creative Portfolio',
 
                 init() {
                     this.setupTypingAnimation();
@@ -2986,6 +2989,76 @@
                     this.setupScrollSpy();
                     this.setupScrollProgress();
                     this.setupSectionReveal();
+                    this.setupTitleRotation();
+                },
+
+                setupTitleRotation() {
+                    const messages = [
+                        'Gajendra Awasthi Portfolio',
+                        'Cybersecurity Enthusiast',
+                        'Developer & Designer',
+                        'Tutorials & Tech Content'
+                    ];
+
+                    if (this.titleTimer) {
+                        clearTimeout(this.titleTimer);
+                    }
+
+                    if (this.titleVisibilityHandler) {
+                        document.removeEventListener('visibilitychange', this.titleVisibilityHandler);
+                    }
+
+                    let messageIndex = 0;
+                    let charIndex = 0;
+                    let isDeleting = false;
+                    let attentionBlink = false;
+
+                    const animateTitle = () => {
+                        if (document.hidden) {
+                            attentionBlink = !attentionBlink;
+                            document.title = attentionBlink
+                                ? 'Wait ! You Missed Something⚠️'
+                                : 'You missed chance to hire me 🫣';
+                            this.titleTimer = setTimeout(animateTitle, 2000);
+                            return;
+                        }
+
+                        const currentMessage = messages[messageIndex];
+
+                        if (!isDeleting) {
+                            charIndex = Math.min(charIndex + 1, currentMessage.length);
+                            document.title = `${currentMessage.slice(0, charIndex)}|`;
+
+                            if (charIndex === currentMessage.length) {
+                                isDeleting = true;
+                                this.titleTimer = setTimeout(animateTitle, 1100);
+                                return;
+                            }
+
+                            this.titleTimer = setTimeout(animateTitle, 55);
+                        } else {
+                            charIndex = Math.max(charIndex - 1, 0);
+                            document.title = `${currentMessage.slice(0, charIndex)}|`;
+
+                            if (charIndex === 0) {
+                                isDeleting = false;
+                                messageIndex = (messageIndex + 1) % messages.length;
+                                this.titleTimer = setTimeout(animateTitle, 220);
+                                return;
+                            }
+
+                            this.titleTimer = setTimeout(animateTitle, 32);
+                        }
+                    };
+
+                    this.titleVisibilityHandler = () => {
+                        clearTimeout(this.titleTimer);
+                        animateTitle();
+                    };
+
+                    document.addEventListener('visibilitychange', this.titleVisibilityHandler);
+
+                    animateTitle();
                 },
 
                 setupTypingAnimation() {
@@ -3017,11 +3090,11 @@
 
                             if (charIndex === currentPhrase.length) {
                                 isDeleting = true;
-                                this.typingTimer = setTimeout(type, 1300);
+                                this.typingTimer = setTimeout(type, 1000);
                                 return;
                             }
 
-                            this.typingTimer = setTimeout(type, 65);
+                            this.typingTimer = setTimeout(type, 50);
                         } else {
                             charIndex = Math.max(charIndex - 1, 0);
                             typingText.textContent = currentPhrase.slice(0, charIndex);
@@ -3033,7 +3106,7 @@
                                 return;
                             }
 
-                            this.typingTimer = setTimeout(type, 35);
+                            this.typingTimer = setTimeout(type, 20);
                         }
                     };
 
