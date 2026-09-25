@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { verifyAdminSession } from '@/lib/auth';
 import { getPortfolioData, saveSectionData } from '@/lib/data-service';
 import { PortfolioData } from '@/types/portfolio';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(
   req: NextRequest,
@@ -12,11 +16,22 @@ export async function GET(
     const allData = await getPortfolioData();
 
     if (section === 'all') {
-      return NextResponse.json(allData);
+      return NextResponse.json(allData, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      });
     }
 
     if (section in allData) {
-      return NextResponse.json({ [section]: allData[section as keyof PortfolioData] });
+      return NextResponse.json(
+        { [section]: allData[section as keyof PortfolioData] },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        }
+      );
     }
 
     return NextResponse.json({ error: `Section '${section}' not found` }, { status: 404 });
@@ -57,7 +72,17 @@ export async function POST(
     }
 
     const result = await saveSectionData(section as keyof PortfolioData, body.data);
-    return NextResponse.json(result);
+
+    if (result.success) {
+      try {
+        revalidatePath('/', 'layout');
+        revalidatePath('/admin', 'layout');
+      } catch (cacheErr) {
+        console.warn('Revalidation notice:', cacheErr);
+      }
+    }
+
+    return NextResponse.json(result, { status: result.success ? 200 : 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }

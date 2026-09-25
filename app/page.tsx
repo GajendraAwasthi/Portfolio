@@ -1,6 +1,7 @@
 import { getPortfolioData } from '@/lib/data-service';
 import PortfolioClient from './PortfolioClient';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Dynamic server rendering for live CMS updates
 
 export default async function HomePage() {

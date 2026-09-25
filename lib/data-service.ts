@@ -105,12 +105,12 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       ctaButtons: profileRes.data.cta_buttons ?? local.profile.ctaButtons,
     } : local.profile;
 
-    const aboutCards = (aboutRes.data && aboutRes.data.length > 0) ? aboutRes.data : local.aboutCards;
-    const stats = (statsRes.data && statsRes.data.length > 0) ? statsRes.data : local.stats;
-    const education = (eduRes.data && eduRes.data.length > 0) ? eduRes.data : local.education;
-    const experience = (expRes.data && expRes.data.length > 0) ? expRes.data : local.experience;
-    const skills = (skillsRes.data && skillsRes.data.length > 0) ? skillsRes.data : local.skills;
-    const certifications = (certsRes.data && certsRes.data.length > 0) ? certsRes.data.map((c: any) => ({
+    const aboutCards = (!aboutRes.error && Array.isArray(aboutRes.data)) ? aboutRes.data : local.aboutCards;
+    const stats = (!statsRes.error && Array.isArray(statsRes.data)) ? statsRes.data : local.stats;
+    const education = (!eduRes.error && Array.isArray(eduRes.data)) ? eduRes.data : local.education;
+    const experience = (!expRes.error && Array.isArray(expRes.data)) ? expRes.data : local.experience;
+    const skills = (!skillsRes.error && Array.isArray(skillsRes.data)) ? skillsRes.data : local.skills;
+    const certifications = (!certsRes.error && Array.isArray(certsRes.data)) ? certsRes.data.map((c: any) => ({
       id: c.id,
       title: c.title,
       imageUrl: c.image_url,
@@ -121,7 +121,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       is_active: c.is_active,
     })) : local.certifications;
 
-    const projects = (projectsRes.data && projectsRes.data.length > 0) ? projectsRes.data.map((p: any) => ({
+    const projects = (!projectsRes.error && Array.isArray(projectsRes.data)) ? projectsRes.data.map((p: any) => ({
       id: p.id,
       title: p.title,
       description: p.description,
@@ -134,7 +134,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       is_active: p.is_active,
     })) : local.projects;
 
-    const videos = (videosRes.data && videosRes.data.length > 0) ? videosRes.data.map((v: any) => ({
+    const videos = (!videosRes.error && Array.isArray(videosRes.data)) ? videosRes.data.map((v: any) => ({
       id: v.id,
       title: v.title,
       description: v.description,
@@ -144,7 +144,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       is_active: v.is_active,
     })) : local.videos;
 
-    const terminalCommands = (terminalRes.data && terminalRes.data.length > 0) ? terminalRes.data : local.terminalCommands;
+    const terminalCommands = (!terminalRes.error && Array.isArray(terminalRes.data)) ? terminalRes.data : local.terminalCommands;
 
     return {
       settings,
@@ -232,112 +232,181 @@ export async function saveSectionData<K extends keyof PortfolioData>(
 
       case 'education': {
         const list = payload as PortfolioData['education'];
-        await supabase.from('education').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('education').insert(list);
+        const { error: delErr } = await supabase.from('education').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `edu-${Date.now()}-${idx}`,
+            degree: item.degree || '',
+            institution: item.institution || '',
+            timeline: item.timeline || '',
+            stream: item.stream || null,
+            description: item.description || '',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('education').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'experience': {
         const list = payload as PortfolioData['experience'];
-        await supabase.from('experience').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('experience').insert(list);
+        const { error: delErr } = await supabase.from('experience').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `exp-${Date.now()}-${idx}`,
+            role: item.role || '',
+            company: item.company || '',
+            duration: item.duration || '',
+            description: item.description || '',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('experience').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'skills': {
         const list = payload as PortfolioData['skills'];
-        await supabase.from('skills').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('skills').insert(list);
+        const { error: delErr } = await supabase.from('skills').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `sk-${Date.now()}-${idx}`,
+            name: item.name || '',
+            percentage: Number(item.percentage) || 0,
+            category: item.category || 'General',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('skills').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'certifications': {
         const list = payload as PortfolioData['certifications'];
-        await supabase.from('certifications').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          const mapped = list.map((c) => ({
-            id: c.id,
-            title: c.title,
-            image_url: c.imageUrl,
-            issuer: c.issuer,
-            issue_date: c.issueDate,
-            credential_url: c.credentialUrl,
-            order_index: c.order_index,
-            is_active: c.is_active,
+        const { error: delErr } = await supabase.from('certifications').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((c, idx) => ({
+            id: c.id || `cert-${Date.now()}-${idx}`,
+            title: c.title || '',
+            image_url: c.imageUrl || '',
+            issuer: c.issuer || null,
+            issue_date: c.issueDate || null,
+            credential_url: c.credentialUrl || null,
+            order_index: c.order_index ?? idx + 1,
+            is_active: c.is_active ?? true,
           }));
-          await supabase.from('certifications').insert(mapped);
+          const { error: insErr } = await supabase.from('certifications').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'projects': {
         const list = payload as PortfolioData['projects'];
-        await supabase.from('projects').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          const mapped = list.map((p) => ({
-            id: p.id,
-            title: p.title,
-            description: p.description,
-            team: p.team,
-            tags: p.tags,
-            github_url: p.githubUrl,
-            live_url: p.liveUrl,
-            image_url: p.imageUrl,
-            order_index: p.order_index,
-            is_active: p.is_active,
+        const { error: delErr } = await supabase.from('projects').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((p, idx) => ({
+            id: p.id || `proj-${Date.now()}-${idx}`,
+            title: p.title || '',
+            description: p.description || '',
+            team: p.team || null,
+            tags: Array.isArray(p.tags) ? p.tags : [],
+            github_url: p.githubUrl || null,
+            live_url: p.liveUrl || null,
+            image_url: p.imageUrl || null,
+            order_index: p.order_index ?? idx + 1,
+            is_active: p.is_active ?? true,
           }));
-          await supabase.from('projects').insert(mapped);
+          const { error: insErr } = await supabase.from('projects').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'videos': {
         const list = payload as PortfolioData['videos'];
-        await supabase.from('videos').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          const mapped = list.map((v) => ({
-            id: v.id,
-            title: v.title,
-            description: v.description,
-            youtube_url: v.youtubeUrl,
-            embed_id: v.embedId,
-            order_index: v.order_index,
-            is_active: v.is_active,
+        const { error: delErr } = await supabase.from('videos').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((v, idx) => ({
+            id: v.id || `vid-${Date.now()}-${idx}`,
+            title: v.title || '',
+            description: v.description || '',
+            youtube_url: v.youtubeUrl || '',
+            embed_id: v.embedId || '',
+            order_index: v.order_index ?? idx + 1,
+            is_active: v.is_active ?? true,
           }));
-          await supabase.from('videos').insert(mapped);
+          const { error: insErr } = await supabase.from('videos').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'aboutCards': {
         const list = payload as PortfolioData['aboutCards'];
-        await supabase.from('about_cards').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('about_cards').insert(list);
+        const { error: delErr } = await supabase.from('about_cards').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `about-${Date.now()}-${idx}`,
+            icon: item.icon || '📌',
+            title: item.title || '',
+            description: item.description || '',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('about_cards').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'stats': {
         const list = payload as PortfolioData['stats'];
-        await supabase.from('stats').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('stats').insert(list);
+        const { error: delErr } = await supabase.from('stats').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `stat-${Date.now()}-${idx}`,
+            target_number: Number(item.target_number) || 0,
+            suffix: item.suffix || '',
+            label: item.label || '',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('stats').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
 
       case 'terminalCommands': {
         const list = payload as PortfolioData['terminalCommands'];
-        await supabase.from('terminal_commands').delete().neq('id', '__dummy__');
-        if (list.length > 0) {
-          await supabase.from('terminal_commands').insert(list);
+        const { error: delErr } = await supabase.from('terminal_commands').delete().neq('id', '__dummy__');
+        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
+        if (list && list.length > 0) {
+          const mapped = list.map((item, idx) => ({
+            id: item.id || `cmd-${Date.now()}-${idx}`,
+            command: item.command || '',
+            output: item.output || '',
+            description: item.description || '',
+            order_index: item.order_index ?? idx + 1,
+            is_active: item.is_active ?? true,
+          }));
+          const { error: insErr } = await supabase.from('terminal_commands').insert(mapped);
+          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
         }
         break;
       }
@@ -347,8 +416,8 @@ export async function saveSectionData<K extends keyof PortfolioData>(
   } catch (err: any) {
     console.error(`Error saving ${section} to Supabase:`, err);
     return {
-      success: true,
-      message: `Saved locally. Supabase write error: ${err.message || err}`,
+      success: false,
+      message: `Failed to save ${section} to Supabase: ${err.message || err}`,
     };
   }
 }
