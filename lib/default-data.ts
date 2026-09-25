@@ -1,0 +1,349 @@
+import { PortfolioData } from '@/types/portfolio';
+
+export const initialPortfolioData: PortfolioData = {
+  profile: {
+    name: 'Gajendra',
+    surnameGradient: 'Awasthi',
+    avatarUrl: 'https://i.postimg.cc/bw9X1Z98/Forest-Modern-Minimal-Music-Album-Cover-(2).png',
+    headlineTyping: [
+      'CS Student',
+      'Content Creator',
+      'Graphics Designer',
+      'Tech Enthusiast',
+      'Cyber Security Enthusiast'
+    ],
+    description: 'A visionary Cybersecurity Pioneer and aspiring developer passionate about building secure systems, creating innovative solutions, and exploring emerging technologies.',
+    resumeUrl: '/src/CV_GajendraAwasthi.pdf',
+    contactEmail: 'gajendraawasthi456@gmail.com',
+    socialLinks: {
+      linkedin: 'https://www.linkedin.com/in/gajendra-awasthi-np/',
+      github: 'https://github.com/GajendraAwasthi',
+      tryhackme: 'https://tryhackme.com/p/gajendraawasthi',
+      facebook: 'https://www.facebook.com/sanuawasthi123',
+      email: 'gajendraawasthi456@gmail.com'
+    },
+    ctaButtons: {
+      viewWorkText: 'View My Work',
+      viewWorkTarget: 'projects',
+      terminalButtonText: 'Use Terminal',
+      resumeButtonText: 'Download CV'
+    }
+  },
+  aboutCards: [
+    {
+      id: 'about-1',
+      icon: '🔐',
+      title: 'Cybersecurity Visionary',
+      description: 'Pioneering secure system design with expertise in IoT security, ethical hacking, penetration testing, and advanced threat mitigation strategies.',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'about-2',
+      icon: '💻',
+      title: 'Aspiring Developer',
+      description: 'Learning and building web applications with focus on clean code, best practices, and creating scalable solutions for real-world problems.',
+      order_index: 2,
+      is_active: true
+    },
+    {
+      id: 'about-3',
+      icon: '🎨',
+      title: 'Creative Designer',
+      description: 'Crafting visually stunning interfaces with expertise in UI/UX, graphic design, and brand identity using industry-leading design tools.',
+      order_index: 3,
+      is_active: true
+    }
+  ],
+  stats: [
+    {
+      id: 'stat-1',
+      target_number: 20,
+      suffix: '+',
+      label: 'Technical Skills',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'stat-2',
+      target_number: 60,
+      suffix: '+',
+      label: 'Projects Delivered',
+      order_index: 2,
+      is_active: true
+    },
+    {
+      id: 'stat-3',
+      target_number: 13,
+      suffix: '',
+      label: 'Certifications',
+      order_index: 3,
+      is_active: true
+    },
+    {
+      id: 'stat-4',
+      target_number: 2,
+      suffix: '',
+      label: 'Years Experience',
+      order_index: 4,
+      is_active: true
+    }
+  ],
+  education: [
+    {
+      id: 'edu-1',
+      degree: 'Bachelor of Computer Applications',
+      institution: 'NAST COLLEGE, Pokhara University',
+      timeline: '2024 - Present',
+      description: 'Pursuing comprehensive degree with focus on practical development, emerging technologies, and cybersecurity fundamentals. Currently maintaining excellent academic performance.',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'edu-2',
+      degree: 'Higher Secondary School (+2)',
+      institution: 'NAST Secondary School, NEB Board',
+      timeline: '2022 - 2024',
+      stream: 'Management + Computer Science',
+      description: 'Completed secondary education with strong foundation in management studies and computer science with excellent academic performance.',
+      order_index: 2,
+      is_active: true
+    },
+    {
+      id: 'edu-3',
+      degree: 'School Education (SEE)',
+      institution: 'Mount Saipal English School',
+      timeline: '2006 - 2021',
+      description: 'Completed primary and lower secondary education with holistic development approach and strong academic foundation across all subjects.',
+      order_index: 3,
+      is_active: true
+    }
+  ],
+  experience: [
+    {
+      id: 'exp-1',
+      role: 'College Representative',
+      company: 'Code For Change Far West',
+      duration: 'Jun 2026 - Present',
+      description: 'Leading tech education initiatives and championing community development projects to foster innovation through technology.',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'exp-2',
+      role: 'Executive Member',
+      company: 'NAST IT CLUB',
+      duration: 'Oct 2025 - Present',
+      description: 'Spearheading tech initiatives, organizing educational workshops, and cultivating a community of technology enthusiasts and innovators.',
+      order_index: 2,
+      is_active: true
+    },
+    {
+      id: 'exp-3',
+      role: 'Graphic Designer',
+      company: 'Freelancer',
+      duration: 'Feb 2024 - Present',
+      description: 'Delivered exceptional creative design solutions including logo design, social media graphics, and brand identity development for diverse clients.',
+      order_index: 3,
+      is_active: true
+    }
+  ],
+  skills: [
+    { id: 'sk-1', name: 'HTML/CSS', percentage: 90, category: 'Programming', order_index: 1, is_active: true },
+    { id: 'sk-2', name: 'JavaScript', percentage: 80, category: 'Programming', order_index: 2, is_active: true },
+    { id: 'sk-3', name: 'C Programming', percentage: 85, category: 'Programming', order_index: 3, is_active: true },
+    { id: 'sk-4', name: 'Java', percentage: 75, category: 'Programming', order_index: 4, is_active: true },
+    
+    { id: 'sk-5', name: 'Adobe Photoshop', percentage: 88, category: 'Design Tools', order_index: 5, is_active: true },
+    { id: 'sk-6', name: 'Figma', percentage: 85, category: 'Design Tools', order_index: 6, is_active: true },
+    { id: 'sk-7', name: 'Canva', percentage: 92, category: 'Design Tools', order_index: 7, is_active: true },
+    { id: 'sk-8', name: 'VS Code', percentage: 90, category: 'Design Tools', order_index: 8, is_active: true },
+    
+    { id: 'sk-9', name: 'Communication', percentage: 90, category: 'Soft Skills', order_index: 9, is_active: true },
+    { id: 'sk-10', name: 'Teamwork', percentage: 92, category: 'Soft Skills', order_index: 10, is_active: true },
+    { id: 'sk-11', name: 'Time Management', percentage: 88, category: 'Soft Skills', order_index: 11, is_active: true },
+    { id: 'sk-12', name: 'Critical Thinking', percentage: 85, category: 'Soft Skills', order_index: 12, is_active: true }
+  ],
+  certifications: [
+    { id: 'cert-1', title: 'Field Guide to Human-Centered Design Certificate', imageUrl: '/src/cert-01-field-guide.jpg', issuer: 'Acumen Academy', order_index: 1, is_active: true },
+    { id: 'cert-2', title: 'AI Skills for Students Certificate', imageUrl: '/src/cert-02-ai-skills.jpg', issuer: 'Educational Partner', order_index: 2, is_active: true },
+    { id: 'cert-3', title: 'Canva Essentials Certificate', imageUrl: '/src/cert-03-canva-essentials.jpg', issuer: 'Canva Design School', order_index: 3, is_active: true },
+    { id: 'cert-4', title: 'Scale Creative Campaigns Certificate', imageUrl: '/src/cert-04-creative-campaigns.jpg', issuer: 'Creative Hub', order_index: 4, is_active: true },
+    { id: 'cert-5', title: 'TryHackMe Cybersecurity Certificate', imageUrl: '/src/cert-05-tryhackme.jpg', issuer: 'TryHackMe', order_index: 5, is_active: true },
+    { id: 'cert-6', title: 'CFC YHILL Certificate', imageUrl: '/src/cert-06-cfc-yhill.png', issuer: 'Code For Change', order_index: 6, is_active: true },
+    { id: 'cert-7', title: 'Professional Achievement Certificate', imageUrl: '/src/cert-07-cert.jpg', issuer: 'Educational Institution', order_index: 7, is_active: true },
+    { id: 'cert-8', title: 'Technology Workshop Certificate', imageUrl: '/src/cert-08-certificate.jpg', issuer: 'Tech Community', order_index: 8, is_active: true },
+    { id: 'cert-9', title: 'CCSC Cybersecurity Certificate', imageUrl: '/src/cert-09-ccsc.jpg', issuer: 'CCSC Nepal', order_index: 9, is_active: true },
+    { id: 'cert-10', title: 'Hacktoberfest Open Source Badge', imageUrl: '/src/cert-10-hacktoberfest.png', issuer: 'DigitalOcean & GitHub', order_index: 10, is_active: true },
+    { id: 'cert-11', title: 'Computer Basics Online Certification', imageUrl: '/src/cert-11-computer-basics.png', issuer: 'Online Academy', order_index: 11, is_active: true },
+    { id: 'cert-12', title: 'Udemy Hack Network PCs Certificate', imageUrl: '/src/cert-12-udemy-hack-network.jpg', issuer: 'Udemy', order_index: 12, is_active: true },
+    { id: 'cert-13', title: 'Udemy Hack Network PCs Certificate (Advanced)', imageUrl: '/src/cert-13-udemy-hack-network-alt.jpg', issuer: 'Udemy', order_index: 13, is_active: true }
+  ],
+  projects: [
+    {
+      id: 'proj-1',
+      title: 'GRAB X AI',
+      description: 'An intelligent command-line AI chatbot developed in C. Seamlessly integrates with Gemini AI API for smart conversations, maintains persistent chat history, and includes secure password-protected authentication system.',
+      team: 'Gajendra Awasthi, Bibhu Shrestha, Asmita Bista, Rejina Pujara',
+      tags: ['C Programming', 'AI Integration', 'API Development', 'Authentication'],
+      githubUrl: 'https://github.com/GajendraAwasthi/Grab-X-AI',
+      liveUrl: '',
+      order_index: 1,
+      is_active: true
+    }
+  ],
+  videos: [
+    {
+      id: 'vid-1',
+      title: 'Git & GitHub Complete Tutorial 🔥 From Zero to Pro | Full Practical Tutorial ✔️',
+      description: 'Hands-on Practice with Git & GitHub content focused on practical learning and clear explanations.',
+      youtubeUrl: 'https://www.youtube.com/watch?v=BQjqaXrI2V4',
+      embedId: 'BQjqaXrI2V4',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'vid-2',
+      title: 'Make Your Project Live Using GitHub || Nepali Students Guide 🔥',
+      description: 'Nepali students guide to deploying projects using GitHub Pages and version control.',
+      youtubeUrl: 'https://www.youtube.com/watch?v=sqKXZwkwJJQ',
+      embedId: 'sqKXZwkwJJQ',
+      order_index: 2,
+      is_active: true
+    }
+  ],
+  terminalCommands: [
+    {
+      id: 'cmd-1',
+      command: 'help',
+      output: `📋 Available Commands:
+├── about        - Learn about me
+├── skills       - View technical skills
+├── projects     - See my projects
+├── experience   - Professional background
+├── education    - Educational history
+├── contact      - Get in touch
+├── download     - Download CV
+├── clear        - Clear terminal
+└── help         - Show this menu`,
+      description: 'List all available terminal commands',
+      order_index: 1,
+      is_active: true
+    },
+    {
+      id: 'cmd-2',
+      command: 'about',
+      output: `👤 Gajendra Awasthi
+Cybersecurity Pioneer & Tech Professional
+
+📚 BCA Student at Pokhara University
+📍 Dhangadhi, Nepal
+
+Passionate about: Building secure systems, innovative solutions & emerging technologies.
+Expertise: Cybersecurity, Web Development, Graphic Design`,
+      description: 'Brief bio and background information',
+      order_index: 2,
+      is_active: true
+    },
+    {
+      id: 'cmd-3',
+      command: 'skills',
+      output: `⚙️  Technical Skills
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+💻 Programming:
+  • HTML/CSS: ████████████░░ 90%
+  • JavaScript: ███████████░░░ 80%
+  • C Programming: ████████████░░ 85%
+  • Java: ███████████░░░ 75%
+
+🎨 Design Tools:
+  • Photoshop: ████████████░░ 88%
+  • Figma: ████████████░░ 85%
+  • Canva: █████████████░ 92%
+  • VS Code: ████████████░░ 90%`,
+      description: 'Technical skills and proficiency overview',
+      order_index: 3,
+      is_active: true
+    },
+    {
+      id: 'cmd-4',
+      command: 'projects',
+      output: `🚀 Featured Projects
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+GRAB X AI - Command-line AI Chatbot
+   Technology: C, Gemini AI API
+   Features: Chat history, Authentication
+   GitHub: github.com/GajendraAwasthi/Grab-X-AI
+
+60+ Other Projects Completed`,
+      description: 'Highlight key projects and repositories',
+      order_index: 4,
+      is_active: true
+    },
+    {
+      id: 'cmd-5',
+      command: 'experience',
+      output: `💼 Professional Experience
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Code For Change Far West - College Representative (Current)
+NAST IT CLUB - Executive Member (Current)
+Freelancer - Graphic Designer (Current)`,
+      description: 'Professional experience and leadership roles',
+      order_index: 5,
+      is_active: true
+    },
+    {
+      id: 'cmd-6',
+      command: 'education',
+      output: `🎓 Educational Background
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bachelor of Computer Applications (BCA)
+NAST COLLEGE, Pokhara University (2024-Present)
+
+Higher Secondary School (+2)
+NAST Secondary School, NEB Board (2022-2024)
+Stream: Management + Computer Science
+
+School Education (SEE)
+Mount Saipal English School (2006-2021)`,
+      description: 'Academic background and institutions',
+      order_index: 6,
+      is_active: true
+    },
+    {
+      id: 'cmd-7',
+      command: 'contact',
+      output: `📞 Contact Information
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📧 Email: gajendraawasthi456@gmail.com
+🔗 LinkedIn: linkedin.com/in/gajendra-awasthi-np/
+💻 GitHub: github.com/GajendraAwasthi
+🛡️  TryHackMe: tryhackme.com/p/gajendraawasthi
+👤 Facebook: facebook.com/sanuawasthi123`,
+      description: 'Direct contact links and profiles',
+      order_index: 7,
+      is_active: true
+    }
+  ],
+  settings: {
+    metaTitle: 'Gajendra Awasthi | Cybersecurity, Development & Creative Portfolio',
+    metaDescription: 'Official portfolio of Gajendra Awasthi from Dhangadhi, Nepal — CS student at NAST College (Pokhara University), cybersecurity enthusiast, developer, content creator, and graphics designer.',
+    metaKeywords: 'Gajendra Awasthi, Gajendra Awasthi portfolio, Gajendra Awasthi Nepal, Dhangadhi Nepal, NAST College, NAST COLLEGE Pokhara University, Pokhara University BCA, Mount Saipal English School, CS student Nepal, cybersecurity enthusiast, ethical hacking, penetration testing, IoT security, web development, aspiring full stack developer, content creator, graphics designer, UI UX design, Adobe Photoshop, Canva, Figma, HTML CSS, JavaScript, C programming, Java, TryHackMe, freelancer Nepal, technology portfolio',
+    ogImage: 'https://media.licdn.com/dms/image/v2/D5603AQHDWKHexhigrg/profile-displayphoto-crop_800_800/B56ZsOE0OAI0AQ-/0/1765467703110?e=1775692800&v=beta&t=bPmGJmmNjahlYV2Y232mP48Q7GZOXQZL4oLkjp8ioQs',
+    favicon: 'https://media.licdn.com/dms/image/v2/D5603AQHDWKHexhigrg/profile-displayphoto-crop_800_800/B56ZsOE0OAI0AQ-/0/1765467703110?e=1775692800&v=beta&t=bPmGJmmNjahlYV2Y232mP48Q7GZOXQZL4oLkjp8ioQs',
+    themeColor: '#1e3a8a',
+    enableAudioEasterEgg: true,
+    mobileAudioSrc: '/src/tismarmobile.MP3',
+    desktopAudioSrc: '/src/tesmardesktop.MP3',
+    attentionTitleBlink: true,
+    footerOwner: 'Gajendra Awasthi',
+    footerTagline: "Let's Create Something Extraordinary Together",
+    footerSubtext: 'Always excited to discuss new projects, innovative ideas, and collaboration opportunities.',
+    lastUpdatedText: 'March 2026 | Next.js + Supabase CMS Edition'
+  }
+};
