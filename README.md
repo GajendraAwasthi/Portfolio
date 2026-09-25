@@ -17,11 +17,11 @@ A portfolio and dynamic Content Management System (CMS) built with **Next.js 15 
   - **Audio Easter Eggs**: Built-in mobile device shake audio (*"Shake to cure bore"*) and tab-switch attention grabber.
   - **SEO & OpenGraph**: Control page titles, meta descriptions, social preview images, and browser favicons from the dashboard.
 - **Dual Persistence Architecture**:
-  - **Local Storage Cache**: Works immediately out of the box with zero external dependencies.
-  - **Supabase Cloud Database**: Plug in your Supabase URL & Key to persist everything in PostgreSQL with Row Level Security (RLS).
+  - **Local file store**: Available for development after explicitly creating an admin account. Use a persistent filesystem.
+  - **Supabase Cloud Database**: Set the Supabase URL and server-only service role key to persist everything in PostgreSQL with Row Level Security (RLS).
   - **1-Click Cloud Sync**: Migrate all current local data directly to Supabase with one click from `/admin/settings`.
 - **Vercel Ready**:
-  - Native Edge-compatible authentication and zero build errors.
+  - Server-verified database sessions and production build support.
 
 ---
 
@@ -29,7 +29,8 @@ A portfolio and dynamic Content Management System (CMS) built with **Next.js 15 
 
 ### 1. Install & Run
 ```bash
-npm install
+npm ci
+npm run set-admin
 npm run dev
 ```
 
@@ -40,7 +41,8 @@ Visit:
 
 ### 2. Admin Authentication
 - Access requires authentication via the `/adlogin` route.
-- Admin credentials and sessions are managed securely in the database.
+- No default admin password is installed. Run `npm run set-admin` before logging in.
+- Local auth requires `data/auth-store.json` on persistent storage. A partial Supabase configuration fails closed.
 
 ---
 
@@ -50,8 +52,8 @@ To link your live Supabase database:
 
 1. **Create a project** at [supabase.com](https://supabase.com).
 2. Go to **SQL Editor** in your Supabase Dashboard.
-3. Open [`supabase/schema.sql`](file:///d:/portfolio/Portfolio/supabase/schema.sql) in this repo, copy its contents, and run it in the SQL Editor to create all tables (including `admin_users`, `auth_sessions`, `login_attempts`) and strict RLS policies.
-4. Open [`supabase/seed.sql`](file:///d:/portfolio/Portfolio/supabase/seed.sql), copy its contents, and run it to populate your initial data and encrypted admin user.
+3. Run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor to create the tables and RLS policies. For an existing project, also run [`supabase/migrations/20260925_restrict_content_policies.sql`](supabase/migrations/20260925_restrict_content_policies.sql) before deploying this update.
+4. On a new, empty database only, run [`supabase/seed.sql`](supabase/seed.sql) to populate initial portfolio content. The seed does not create an admin account.
 5. In your Supabase Dashboard, go to **Project Settings** → **API** and copy:
    - `Project URL`
    - `anon / public` key
@@ -62,7 +64,8 @@ To link your live Supabase database:
    NEXT_PUBLIC_SUPABASE_ANON_KEY=
    SUPABASE_SERVICE_ROLE_KEY=
    ```
-7. Open `/adlogin`, log in with your admin credentials stored in the `admin_users` table, visit `/admin/settings`, and verify the status shows **Supabase Connected**!
+7. Run `npm run set-admin` with the same environment to create or rotate the admin account and revoke prior sessions. If the seed was used in an older deployment, rotate that account before reopening the CMS.
+8. Open `/adlogin`, log in, visit `/admin/settings`, and verify the status shows **Supabase Connected**.
 
 ---
 
@@ -75,6 +78,8 @@ To link your live Supabase database:
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
 4. Click **Deploy**. Vercel will build and launch your live portfolio and admin CMS.
+
+The build no longer writes to Supabase. Use the authenticated sync action in `/admin/settings` only when you intend to replace cloud content from the local file. `npm run db:push` is the equivalent manual operation. Local file mode is unsuitable for Vercel because its filesystem is not persistent.
 
 ---
 
@@ -120,7 +125,7 @@ To link your live Supabase database:
 │       ├── data/[section]/     # Dynamic CMS data CRUD endpoints
 │       └── sync/               # Supabase healthcheck & 1-click cloud push
 ├── lib/
-│   ├── auth.ts                 # Web Crypto HMAC-SHA256 session tokens
+│   ├── auth.ts                 # Random session tokens stored as SHA-256 digests
 │   ├── data-service.ts         # Unified dual-persistence (Supabase + local)
 │   ├── default-data.ts         # Seed data matching original portfolio
 │   └── supabase.ts             # Supabase client & admin client

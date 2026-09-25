@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/sync-supabase.mjs && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "set-admin": "node scripts/set-admin.mjs",
     "db:push": "node scripts/sync-supabase.mjs"
   },
@@ -30,5 +31,8 @@
     "eslint": "^9.21.0",
     "eslint-config-next": "^15.2.1",
     "typescript": "^5.8.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.28"
   }
 }
