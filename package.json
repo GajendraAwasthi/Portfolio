@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/sync-supabase.mjs && next build",
     "start": "next start",
     "lint": "next lint",
-    "set-admin": "node scripts/set-admin.mjs"
+    "set-admin": "node scripts/set-admin.mjs",
+    "db:push": "node scripts/sync-supabase.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
