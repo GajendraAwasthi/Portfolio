@@ -1,11 +1,11 @@
-import { getPortfolioData } from '@/lib/data-service';
+import { getPortfolioData, visiblePortfolioData } from '@/lib/data-service';
 import PortfolioClient from './PortfolioClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; // Dynamic server rendering for live CMS updates
 
 export default async function HomePage() {
-  const data = await getPortfolioData();
+  const data = visiblePortfolioData(await getPortfolioData());
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -26,7 +26,7 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <PortfolioClient data={data} />
     </>

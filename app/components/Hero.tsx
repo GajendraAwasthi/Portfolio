@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowRight, Terminal, Download, ChevronDown } from 'lucide-react';
 import { ProfileHero } from '@/types/portfolio';
 
@@ -15,12 +15,13 @@ export default function Hero({ profile, onOpenTerminal }: HeroProps) {
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const phrases = profile.headlineTyping && profile.headlineTyping.length > 0
+  const phrases = useMemo(() => profile.headlineTyping && profile.headlineTyping.length > 0
     ? profile.headlineTyping
-    : ['CS Student', 'Developer', 'Cybersecurity Enthusiast'];
+    : ['CS Student', 'Developer', 'Cybersecurity Enthusiast'], [profile.headlineTyping]);
 
   useEffect(() => {
     const currentPhrase = phrases[phraseIndex] || '';
+    let pauseTimer: ReturnType<typeof setTimeout> | undefined;
 
     const timer = setTimeout(() => {
       if (!isDeleting) {
@@ -29,7 +30,7 @@ export default function Hero({ profile, onOpenTerminal }: HeroProps) {
           setCharIndex((prev) => prev + 1);
         } else {
           // Pause at end of word
-          setTimeout(() => setIsDeleting(true), 1200);
+          pauseTimer = setTimeout(() => setIsDeleting(true), 1200);
         }
       } else {
         if (charIndex > 0) {
@@ -42,7 +43,10 @@ export default function Hero({ profile, onOpenTerminal }: HeroProps) {
       }
     }, isDeleting ? 30 : 60);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (pauseTimer) clearTimeout(pauseTimer);
+    };
   }, [charIndex, isDeleting, phraseIndex, phrases]);
 
   const handleDownloadCV = () => {

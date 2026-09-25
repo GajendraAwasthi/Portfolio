@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS login_attempts_username_window_idx
+    ON login_attempts (username_attempted, created_at) WHERE success = false;
+
 -- 4. Site Settings Table
 CREATE TABLE IF NOT EXISTS site_settings (
     id TEXT PRIMARY KEY DEFAULT 'default',
@@ -238,6 +241,6 @@ BEGIN
         EXECUTE format('CREATE POLICY "Public read access on %I" ON %I FOR SELECT USING (true);', tbl, tbl);
 
         EXECUTE format('DROP POLICY IF EXISTS "Full access for service role on %I" ON %I;', tbl, tbl);
-        EXECUTE format('CREATE POLICY "Full access for service role on %I" ON %I FOR ALL USING (true) WITH CHECK (true);', tbl, tbl);
+        EXECUTE format('CREATE POLICY "Full access for service role on %I" ON %I FOR ALL TO service_role USING (true) WITH CHECK (true);', tbl, tbl);
     END LOOP;
 END $$;

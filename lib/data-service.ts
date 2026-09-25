@@ -1,10 +1,66 @@
+import 'server-only';
 import fs from 'fs';
 import path from 'path';
 import { initialPortfolioData } from '@/lib/default-data';
-import { getSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabaseAdmin, isSupabaseConfigured, isSupabaseRequested } from '@/lib/supabase';
 import { PortfolioData } from '@/types/portfolio';
+import { safeEmailAddress, safeExternalUrl, safeMediaUrl } from '@/lib/validate-content';
 
 const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'portfolio-store.json');
+
+export function visiblePortfolioData(data: PortfolioData): PortfolioData {
+  return {
+    ...data,
+    aboutCards: data.aboutCards.filter((item) => item.is_active),
+    stats: data.stats.filter((item) => item.is_active),
+    education: data.education.filter((item) => item.is_active),
+    experience: data.experience.filter((item) => item.is_active),
+    skills: data.skills.filter((item) => item.is_active),
+    certifications: data.certifications.filter((item) => item.is_active),
+    projects: data.projects.filter((item) => item.is_active),
+    videos: data.videos.filter((item) => item.is_active),
+    terminalCommands: data.terminalCommands.filter((item) => item.is_active),
+  };
+}
+
+function sanitizePublicUrls(data: PortfolioData): PortfolioData {
+  const social = data.profile.socialLinks || {};
+  return {
+    ...data,
+    settings: {
+      ...data.settings,
+      ogImage: safeMediaUrl(data.settings.ogImage),
+      favicon: safeMediaUrl(data.settings.favicon),
+      mobileAudioSrc: safeMediaUrl(data.settings.mobileAudioSrc),
+      desktopAudioSrc: safeMediaUrl(data.settings.desktopAudioSrc),
+    },
+    profile: {
+      ...data.profile,
+      avatarUrl: safeMediaUrl(data.profile.avatarUrl),
+      resumeUrl: safeMediaUrl(data.profile.resumeUrl),
+      contactEmail: safeEmailAddress(data.profile.contactEmail),
+      socialLinks: {
+        ...social,
+        linkedin: safeExternalUrl(social.linkedin), github: safeExternalUrl(social.github),
+        tryhackme: safeExternalUrl(social.tryhackme), facebook: safeExternalUrl(social.facebook),
+        twitter: safeExternalUrl(social.twitter),
+        email: safeEmailAddress(social.email),
+      },
+    },
+    certifications: data.certifications.map((c) => ({
+      ...c, imageUrl: safeMediaUrl(c.imageUrl), credentialUrl: safeExternalUrl(c.credentialUrl),
+    })),
+    projects: data.projects.map((p) => ({
+      ...p, githubUrl: safeExternalUrl(p.githubUrl), liveUrl: safeExternalUrl(p.liveUrl),
+      imageUrl: safeMediaUrl(p.imageUrl),
+    })),
+    videos: data.videos.map((v) => ({
+      ...v, youtubeUrl: safeExternalUrl(v.youtubeUrl),
+      embedId: /^[a-zA-Z0-9_-]{11}$/.test(v.embedId) ? v.embedId : '',
+      is_active: v.is_active && /^[a-zA-Z0-9_-]{11}$/.test(v.embedId),
+    })),
+  };
+}
 
 // Helper to ensure data directory and file exist
 function getLocalStoredData(): PortfolioData {
@@ -12,27 +68,44 @@ function getLocalStoredData(): PortfolioData {
     if (fs.existsSync(DATA_FILE_PATH)) {
       const content = fs.readFileSync(DATA_FILE_PATH, 'utf-8');
       const parsed = JSON.parse(content);
-      return {
+      return sanitizePublicUrls({
         ...initialPortfolioData,
         ...parsed,
-      };
+      });
     }
   } catch (error) {
     console.error('Error reading local portfolio store:', error);
   }
-  return initialPortfolioData;
+  return sanitizePublicUrls(initialPortfolioData);
 }
 
 function saveLocalStoredData(data: PortfolioData): void {
-  try {
-    const dir = path.dirname(DATA_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error saving local portfolio store:', error);
+  const dir = path.dirname(DATA_FILE_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+  const temporary = `${DATA_FILE_PATH}.${crypto.randomUUID()}.tmp`;
+  try {
+    fs.writeFileSync(temporary, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(temporary, DATA_FILE_PATH);
+  } finally {
+    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  }
+}
+
+async function replaceRows(table: string, rows: { id: string }[]): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) throw new Error('Supabase is not configured');
+  if (rows.length) {
+    const { error } = await supabase.from(table).upsert(rows);
+    if (error) throw error;
+  }
+  // Upsert first: failed inserts must never erase the previously published section.
+  const deletion = rows.length
+    ? supabase.from(table).delete().not('id', 'in', `(${rows.map((row) => row.id).join(',')})`)
+    : supabase.from(table).delete().neq('id', '__dummy__');
+  const { error } = await deletion;
+  if (error) throw error;
 }
 
 // Fetch all portfolio data
@@ -146,7 +219,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
 
     const terminalCommands = (!terminalRes.error && Array.isArray(terminalRes.data)) ? terminalRes.data : local.terminalCommands;
 
-    return {
+    return sanitizePublicUrls({
       settings,
       profile,
       aboutCards,
@@ -158,7 +231,7 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       projects,
       videos,
       terminalCommands,
-    };
+    });
   } catch (err) {
     console.error('Error fetching Supabase data, falling back to local:', err);
     return getLocalStoredData();
@@ -170,12 +243,16 @@ export async function saveSectionData<K extends keyof PortfolioData>(
   section: K,
   payload: PortfolioData[K]
 ): Promise<{ success: boolean; message: string }> {
-  // Always update local storage so changes persist locally regardless of cloud status
-  const current = getLocalStoredData();
-  current[section] = payload;
-  saveLocalStoredData(current);
-
   if (!isSupabaseConfigured()) {
+    if (isSupabaseRequested()) return { success: false, message: 'Supabase configuration is incomplete.' };
+    try {
+      const current = getLocalStoredData();
+      current[section] = payload;
+      saveLocalStoredData(current);
+    } catch (error) {
+      console.error('Local content write failed:', error);
+      return { success: false, message: 'Local content could not be saved.' };
+    }
     return {
       success: true,
       message: 'Saved to local store successfully. (Configure Supabase credentials in .env.local to persist in the cloud).',
@@ -184,14 +261,14 @@ export async function saveSectionData<K extends keyof PortfolioData>(
 
   const supabase = getSupabaseAdmin();
   if (!supabase) {
-    return { success: true, message: 'Saved to local store (Supabase client not initialized).' };
+    return { success: false, message: 'Supabase client is unavailable.' };
   }
 
   try {
     switch (section) {
       case 'settings': {
         const s = payload as PortfolioData['settings'];
-        await supabase.from('site_settings').upsert({
+        const { error } = await supabase.from('site_settings').upsert({
           id: 'default',
           meta_title: s.metaTitle,
           meta_description: s.metaDescription,
@@ -209,12 +286,13 @@ export async function saveSectionData<K extends keyof PortfolioData>(
           last_updated_text: s.lastUpdatedText,
           updated_at: new Date().toISOString(),
         });
+        if (error) throw error;
         break;
       }
 
       case 'profile': {
         const p = payload as PortfolioData['profile'];
-        await supabase.from('profile').upsert({
+        const { error } = await supabase.from('profile').upsert({
           id: 'default',
           name: p.name,
           surname_gradient: p.surnameGradient,
@@ -227,13 +305,12 @@ export async function saveSectionData<K extends keyof PortfolioData>(
           cta_buttons: p.ctaButtons,
           updated_at: new Date().toISOString(),
         });
+        if (error) throw error;
         break;
       }
 
       case 'education': {
         const list = payload as PortfolioData['education'];
-        const { error: delErr } = await supabase.from('education').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `edu-${Date.now()}-${idx}`,
@@ -245,16 +322,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('education').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('education', mapped);
+        } else {
+          await replaceRows('education', []);
         }
         break;
       }
 
       case 'experience': {
         const list = payload as PortfolioData['experience'];
-        const { error: delErr } = await supabase.from('experience').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `exp-${Date.now()}-${idx}`,
@@ -265,16 +341,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('experience').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('experience', mapped);
+        } else {
+          await replaceRows('experience', []);
         }
         break;
       }
 
       case 'skills': {
         const list = payload as PortfolioData['skills'];
-        const { error: delErr } = await supabase.from('skills').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `sk-${Date.now()}-${idx}`,
@@ -284,16 +359,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('skills').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('skills', mapped);
+        } else {
+          await replaceRows('skills', []);
         }
         break;
       }
 
       case 'certifications': {
         const list = payload as PortfolioData['certifications'];
-        const { error: delErr } = await supabase.from('certifications').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((c, idx) => ({
             id: c.id || `cert-${Date.now()}-${idx}`,
@@ -305,16 +379,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: c.order_index ?? idx + 1,
             is_active: c.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('certifications').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('certifications', mapped);
+        } else {
+          await replaceRows('certifications', []);
         }
         break;
       }
 
       case 'projects': {
         const list = payload as PortfolioData['projects'];
-        const { error: delErr } = await supabase.from('projects').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((p, idx) => ({
             id: p.id || `proj-${Date.now()}-${idx}`,
@@ -328,16 +401,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: p.order_index ?? idx + 1,
             is_active: p.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('projects').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('projects', mapped);
+        } else {
+          await replaceRows('projects', []);
         }
         break;
       }
 
       case 'videos': {
         const list = payload as PortfolioData['videos'];
-        const { error: delErr } = await supabase.from('videos').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((v, idx) => ({
             id: v.id || `vid-${Date.now()}-${idx}`,
@@ -348,16 +420,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: v.order_index ?? idx + 1,
             is_active: v.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('videos').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('videos', mapped);
+        } else {
+          await replaceRows('videos', []);
         }
         break;
       }
 
       case 'aboutCards': {
         const list = payload as PortfolioData['aboutCards'];
-        const { error: delErr } = await supabase.from('about_cards').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `about-${Date.now()}-${idx}`,
@@ -367,16 +438,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('about_cards').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('about_cards', mapped);
+        } else {
+          await replaceRows('about_cards', []);
         }
         break;
       }
 
       case 'stats': {
         const list = payload as PortfolioData['stats'];
-        const { error: delErr } = await supabase.from('stats').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `stat-${Date.now()}-${idx}`,
@@ -386,16 +456,15 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('stats').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('stats', mapped);
+        } else {
+          await replaceRows('stats', []);
         }
         break;
       }
 
       case 'terminalCommands': {
         const list = payload as PortfolioData['terminalCommands'];
-        const { error: delErr } = await supabase.from('terminal_commands').delete().neq('id', '__dummy__');
-        if (delErr) throw new Error(`Delete failed: ${delErr.message}`);
         if (list && list.length > 0) {
           const mapped = list.map((item, idx) => ({
             id: item.id || `cmd-${Date.now()}-${idx}`,
@@ -405,19 +474,28 @@ export async function saveSectionData<K extends keyof PortfolioData>(
             order_index: item.order_index ?? idx + 1,
             is_active: item.is_active ?? true,
           }));
-          const { error: insErr } = await supabase.from('terminal_commands').insert(mapped);
-          if (insErr) throw new Error(`Insert failed: ${insErr.message}`);
+          await replaceRows('terminal_commands', mapped);
+        } else {
+          await replaceRows('terminal_commands', []);
         }
         break;
       }
     }
 
-    return { success: true, message: `Updated ${section} in Supabase and local store!` };
+    // The database is authoritative in cloud mode. A local backup is best effort.
+    try {
+      const current = getLocalStoredData();
+      current[section] = payload;
+      saveLocalStoredData(current);
+    } catch (error) {
+      console.warn('Local content backup failed:', error);
+    }
+    return { success: true, message: `Updated ${section} in Supabase!` };
   } catch (err: any) {
     console.error(`Error saving ${section} to Supabase:`, err);
     return {
       success: false,
-      message: `Failed to save ${section} to Supabase: ${err.message || err}`,
+      message: `Failed to save ${section} to Supabase. Existing content was preserved where possible.`,
     };
   }
 }
@@ -447,7 +525,8 @@ export async function syncSeedToSupabase(): Promise<{ success: boolean; message:
   ];
 
   for (const section of sections) {
-    await saveSectionData(section, data[section]);
+    const result = await saveSectionData(section, data[section]);
+    if (!result.success) return result;
   }
 
   return {

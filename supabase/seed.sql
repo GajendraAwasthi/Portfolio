@@ -3,17 +3,8 @@
 -- Run this script in your Supabase SQL Editor after schema.sql
 -- =========================================================
 
--- Clean existing data
-TRUNCATE TABLE site_settings, profile, about_cards, stats, education, experience, skills, certifications, projects, videos, terminal_commands;
-
--- 1. Initial Admin User
-INSERT INTO admin_users (username, email, password_hash)
-VALUES (
-    'admin',
-    'gajendraawasthi456@gmail.com',
-    '$2b$10$o4U0JGEvS4hz1IwY.H/qyuU5QX.hxW/iyRzDlDBhw/G.BqPFzhLvO'
-)
-ON CONFLICT (username) DO NOTHING;
+-- Initial content only. Provision the admin separately with npm run set-admin.
+-- Never run this seed against a populated CMS: its inserts are intended for an empty database.
 
 -- 2. Site Settings
 INSERT INTO site_settings (

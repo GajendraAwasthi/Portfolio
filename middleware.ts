@@ -9,12 +9,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/adlogin', req.url));
   }
 
-  // 2. If logged in and visiting /adlogin, redirect to /admin dashboard
-  if (pathname === '/adlogin' && sessionToken) {
-    return NextResponse.redirect(new URL('/admin', req.url));
-  }
-
-  // 3. Protect all /admin routes
+  // 2. Protect all /admin routes. The layout performs the authoritative session lookup.
   if (pathname.startsWith('/admin')) {
     if (!sessionToken) {
       const loginUrl = new URL('/adlogin', req.url);
@@ -22,15 +17,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
-
-  // 4. Extra Security Headers
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
